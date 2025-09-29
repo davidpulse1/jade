@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/init.php';
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,8 +22,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Fetch and display bookings from company_bookings.php -->
-                </tbody>
+                        <!-- Fetch and display bookings from company_bookings.php -->
+                    </tbody>
             </table>
         </div>
         <div class="messages">

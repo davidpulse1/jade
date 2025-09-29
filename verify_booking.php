@@ -1,11 +1,19 @@
 <?php
-$booking_id = $_GET['booking_id'];
+require_once __DIR__ . '/init.php';
+
+$booking_id = $_GET['booking_id'] ?? null;
+if (empty($_SESSION['company_id']) || !$booking_id) {
+    http_response_code(400);
+    echo json_encode(['error' => 'invalid_request']);
+    exit;
+}
+
 $stmt = $pdo->prepare("SELECT * FROM verification_questions WHERE company_id = ?");
 $stmt->execute([$_SESSION['company_id']]);
 $questions = $stmt->fetchAll();
 
 foreach ($questions as $question) {
-    echo "<div>{$question['question']}</div>";
+    echo "<div>" . e($question['question']) . "</div>";
     if ($question['type'] == 'text') {
         echo "<input type='text' name='answers[{$question['id']}]'>";
     } elseif ($question['type'] == 'number') {
@@ -14,9 +22,12 @@ foreach ($questions as $question) {
         echo "<input type='date' name='answers[{$question['id']}]'>";
     } elseif ($question['type'] == 'choice') {
         $options = json_decode($question['options']);
-        foreach ($options as $option) {
-            echo "<input type='radio' name='answers[{$question['id']}]' value='{$option}'> {$option}";
+        if (is_array($options)) {
+            foreach ($options as $option) {
+                echo "<label><input type='radio' name='answers[{$question['id']}]' value='" . e($option) . "'> " . e($option) . "</label>";
+            }
         }
     }
 }
+
 ?>

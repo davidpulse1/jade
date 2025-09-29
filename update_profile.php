@@ -1,12 +1,16 @@
 <?php
+require_once __DIR__ . '/init.php';
 
-// update_profile.php
-session_start();
+if (empty($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+	http_response_code(400);
+	echo json_encode(['error' => 'invalid_request']);
+	exit;
+}
+
 $user_id = $_SESSION['user_id'];
-$profile = $_POST['profile'];
+$profile = $_POST['profile'] ?? '';
 
-// Update the profile in the database
 $stmt = $pdo->prepare("UPDATE users SET profile = ? WHERE id = ?");
 $stmt->execute([$profile, $user_id]);
 
-echo "Profile updated successfully.";
+echo json_encode(['success' => true]);

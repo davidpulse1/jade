@@ -1,28 +1,25 @@
 <?php
+require_once __DIR__ . '/init.php';
 
-// save_dates.php
-session_start();
-$user_id = $_SESSION['user_id'];
+// save_dates.php: accepts JSON {start,end} from frontend and creates a pending booking
 $data = json_decode(file_get_contents('php://input'), true);
-$start_date = $data['start'];
-$end_date = $data['end'];
+if (empty($_SESSION['user_id']) || !$data) {
+    http_response_code(400);
+    echo json_encode(['error' => 'invalid_request']);
+    exit;
+}
 
-// Save dates to database
+$user_id = $_SESSION['user_id'];
+$start_date = $data['start'] ?? null;
+$end_date = $data['end'] ?? null;
+
+if (!$start_date || !$end_date) {
+    http_response_code(400);
+    echo json_encode(['error' => 'missing_dates']);
+    exit;
+}
+
 $stmt = $pdo->prepare("INSERT INTO bookings (user_id, start_date, end_date, status) VALUES (?, ?, ?, 'pending')");
 $stmt->execute([$user_id, $start_date, $end_date]);
 
-// company_dashboard.php
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $booking_id = $_POST['booking_id'];
-    $status = $_POST['status']; // 'accepted' or 'rejected'
-
-    // Update booking status
-    $stmt = $pdo->prepare("UPDATE bookings SET status = ? WHERE id = ?");
-    $stmt->execute([$status, $booking_id]);
-
-    // Notify user
-    $booking = $stmt->fetch();
-    $message = $status == 'accepted' ? "Your booking has been accepted." : "Your booking has been rejected.";
-    $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
-    $stmt->execute([$_SESSION['company_id'], $booking['user_id'], $message]);
-}
+echo json_encode(['success' => true, 'booking_id' => $pdo->lastInsertId()]);
